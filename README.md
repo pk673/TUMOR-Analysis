@@ -75,10 +75,10 @@ The same has been represented in the correlation plot below:
 
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611571-a695c921-3297-45e6-8799-765bf3d104be.png">
 
-# This gives us some helpful information. First, it tells us that the average radius for benign tumors is lower than the average radius for malignant tumors.Secondly, it shows us that there is some overlap where we could potentially misdiagnose the tumors if these were the only features measured. 
+This gives us some helpful information. First, it tells us that the average radius for benign tumors is lower than the average radius for malignant tumors.Secondly, it shows us that there is some overlap where we could potentially misdiagnose the tumors if these were the only features measured. 
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611552-4638f21f-ac15-42e6-a915-ace9f9c5a9f2.png">
 
-# This shows us that, on average, benign tumors have lower values of both texture  mean and texture worst measurements. It also shows us that some samples would cause an error in classification if we did not know their diagnosis in advance. So, we need to dig a little deeper and see if we can get a better delineation of classes (benign or malignant) through principal component analysis. Most histograms present very asymmetric behavior with similar to exponential distribution. Some predictor look like exponential distribuition as radius_se, perimeter_se, area_se, concavity_se and fractal_dimension_se. There is no true outliers, the outliers at box-plot is due the kind of distribution. There is no true outliers, the outliers at box-plot is due the kind of distribution. There is no missingvalues or NAs. Identified 21 pairs of highly correlated predictors, r> 0.9, this was due to the choice of predictors that are associated, measures things related: radius, perimeter and area.
+This shows us that, on average, benign tumors have lower values of both texture  mean and texture worst measurements. It also shows us that some samples would cause an error in classification if we did not know their diagnosis in advance. So, we need to dig a little deeper and see if we can get a better delineation of classes (benign or malignant) through principal component analysis. Most histograms present very asymmetric behavior with similar to exponential distribution. Some predictor look like exponential distribuition as radius_se, perimeter_se, area_se, concavity_se and fractal_dimension_se. There is no true outliers, the outliers at box-plot is due the kind of distribution. There is no true outliers, the outliers at box-plot is due the kind of distribution. There is no missingvalues or NAs. Identified 21 pairs of highly correlated predictors, r> 0.9, this was due to the choice of predictors that are associated, measures things related: radius, perimeter and area.
 There are 14 predictors related with the response, Diagnosis, with r>=0.6, which is good. 
  
  <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611501-2e85877b-e253-4f93-8af9-6c2a18209eaa.png">
@@ -173,25 +173,25 @@ Inferences:
 
  <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232610865-c4885916-3bc4-4bfc-9d6c-111a93c3a371.png">
 
-##Higher communalities mean the factor solution represents the variable well. 
-#From the output, we can see that most of the original variables have high communality values (close to 1), indicating that they are well-represented by the principal components. This suggests that the principal components capture the majority of the variation in the original data.
-#Communalities represent the proportion of variance in each variable that can be explained by all the other variables included in the analysis.
-#For example, the communalities for "radius_mean" is 0.954, which means that 95.4% of the variance in "radius_mean" can be explained by all the other variables included in the principal component analysis (PCA).
+Higher communalities mean the factor solution represents the variable well. 
+From the output, we can see that most of the original variables have high communality values (close to 1), indicating that they are well-represented by the principal components. This suggests that the principal components capture the majority of the variation in the original data.
+Communalities represent the proportion of variance in each variable that can be explained by all the other variables included in the analysis.
+For example, the communalities for "radius_mean" is 0.954, which means that 95.4% of the variance in "radius_mean" can be explained by all the other variables included in the principal component analysis (PCA).
 
  <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232610833-8f36b5c1-aa25-4719-8b28-0d7032528ab4.png">
 
 Parallel analysis is a method used to determine the optimal number of factors or components in a factor analysis. It compares the eigenvalues of the actual data to the eigenvalues of randomly generated data with the same sample size and number of variables. Based on the output you provided, it seems that the parallel analysis suggests that the number of factors in the data is 6 and the number of components is 5. This means that the data is likely best represented by 6 underlying factors or dimensions, and that a factor analysis with 5 components is appropriate for summarizing the data.
  <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232610807-8400dbc3-003c-40bc-a833-62a129b602d8.png">
 
-# Based on the loadings output, the variables that contribute the most to each of the 6 components (RC1, RC2, RC3, RC4, RC5, and RC6) are as follows:
-# 
-# RC1: radius_mean, perimeter_mean, area_mean, radius_worst, perimeter_worst, area_area_se, radius_se,perimeter_se,concave_pts_mean,concavity_mean,concave_pts_first
-# RC2: smoothness_mean, smoothness_worst, fractal_dim_worst,fractal_dim_mean, compactness_worst 
-# RC3: smoothness_se, texture_se
-# RC5: texture_worst, texture_mean
-# RC5: smoothness_mean, compactness_mean, concavity_mean, concave_pts_mean, symmetry_mean
-# RC6: symmetry_se,symmetry_worst_symmetry_mean
-# Therefore, the variables contributing the most to the first five components are quite varied, while symmetry-related variables and measures of irregularity in cell shape mostly characterize the sixth component.
+Based on the loadings output, the variables that contribute the most to each of the 6 components (RC1, RC2, RC3, RC4, RC5, and RC6) are as follows:
+
+- RC1: radius_mean, perimeter_mean, area_mean, radius_worst, perimeter_worst, area_area_se, radius_se,perimeter_se,concave_pts_mean,concavity_mean,concave_pts_first
+- RC2: smoothness_mean, smoothness_worst, fractal_dim_worst,fractal_dim_mean, compactness_worst 
+- RC3: smoothness_se, texture_se
+- RC5: texture_worst, texture_mean
+- RC5: smoothness_mean, compactness_mean, concavity_mean, concave_pts_mean, symmetry_mean
+- RC6: symmetry_se,symmetry_worst_symmetry_mean
+- Therefore, the variables contributing the most to the first five components are quite varied, while symmetry-related variables and measures of irregularity in cell shape mostly characterize the sixth component.
 
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232610773-1c6e54ca-e0fc-4169-8457-ca4af7ee2ccc.png">
 
