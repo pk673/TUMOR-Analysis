@@ -1,9 +1,13 @@
+
 # Tumor-Analysis
 #Develop accurate models for tumor diagnosis prediction using comprehensive analysis of Wisconsin Breast Cancer Diagnostic (WBCD) dataset including feature selection, classification models, visualization, outlier identification, imbalanced data management, performance evaluation, and generalization approaches. Increased model accuracy and precision with PCA for dimensionality reduction and K-means clustering for feature extraction
 #Perform LDA and factor analysis, we can extract the most relevant variables that explain the variation in the dataset and reduce the dimensionality of the dataset. This can help improve the accuracy of the classification and provide a better understanding of the underlying structure of the data.
 
 MULTIVARIATE ANALYSIS
 Breast Cancer Analysis: Malignant vs. Benign Tumors
+
+
+![image](https://user-images.githubusercontent.com/123758881/232609946-402fac22-2da6-4322-a9df-4e7dcc2a964b.png)
 
 Introduction
 One out of every eight women in the United States is diagnosed with breast cancer. 
@@ -67,21 +71,25 @@ Some features appear to be normally distributed, such as radius_mean, texture_me
 
 
 The output shows the correlation values between the target variable, which is the diagnosis of the tumor (M=malignant or B=benign), and each of the predictor variables in the dataset.
+
 <img width="285" alt="image" src="https://user-images.githubusercontent.com/123758881/232611681-40b964ca-1e92-47b2-ad73-befe02d4b1d7.png">
 
 #Based on the output, we can infer that the size-related variables such as radius, perimeter, and area, are strongly positively correlated with the tumor being malignant. This suggests that larger tumor sizes are more likely to be malignant. Additionally, other variables such as concave points mean and worst, concavity mean and worst, and compactness mean and worst also have a positive correlation with malignancy. On the other hand, variables such as fractal dimension mean and worst, smoothness mean, worst, and se, symmetry mean, worst, and se, and texture mean, worst, and se have a negative correlation with malignancy. This suggests that tumors with lower values for these variables are more likely to be malignant. It is important to note that correlation does not imply causation, and other factors not included     in the dataset may also play a role in determining the malignancy of a tumor. 
 The same has been represented in the correlation plot below: 
- <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611654-6c5aa03a-a895-4906-9ba1-2ea6310243a5.png">
+
+<img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611654-6c5aa03a-a895-4906-9ba1-2ea6310243a5.png">
 
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611571-a695c921-3297-45e6-8799-765bf3d104be.png">
 
 This gives us some helpful information. First, it tells us that the average radius for benign tumors is lower than the average radius for malignant tumors.Secondly, it shows us that there is some overlap where we could potentially misdiagnose the tumors if these were the only features measured. 
+
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611552-4638f21f-ac15-42e6-a915-ace9f9c5a9f2.png">
 
 This shows us that, on average, benign tumors have lower values of both texture  mean and texture worst measurements. It also shows us that some samples would cause an error in classification if we did not know their diagnosis in advance. So, we need to dig a little deeper and see if we can get a better delineation of classes (benign or malignant) through principal component analysis. Most histograms present very asymmetric behavior with similar to exponential distribution. Some predictor look like exponential distribuition as radius_se, perimeter_se, area_se, concavity_se and fractal_dimension_se. There is no true outliers, the outliers at box-plot is due the kind of distribution. There is no true outliers, the outliers at box-plot is due the kind of distribution. There is no missingvalues or NAs. Identified 21 pairs of highly correlated predictors, r> 0.9, this was due to the choice of predictors that are associated, measures things related: radius, perimeter and area.
 There are 14 predictors related with the response, Diagnosis, with r>=0.6, which is good. 
  
  <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611501-2e85877b-e253-4f93-8af9-6c2a18209eaa.png">
+
 The response variable looks slightly unbalanced.It may indicate that there is some bias in the data or that the study was not designed to produce a balanced sample. This could potentially affect the results of any statistical analyses performed on the data, as the sample may not be representative of the population of interest. 
 
 Principal Component Analysis (PCA):
@@ -96,7 +104,6 @@ In R, prcomp function was used for principal component analysis. This function u
 - X – scores 
  
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611464-c2a287ab-7896-4230-a8e7-f12a643895d4.png">
-
 
 Biplots bring together loadings and scores. Variables are represented by the vectors . the biplot can provide insights into the relationships between the observations and the variables in the dataset. Points that are close together in the biplot are similar, and variables that are close to each other are strongly correlated. The direction of an arrow indicates the direction of increasing values for that variable. Therefore, if two arrows are pointing in roughly the same direction, they are positively correlated, and if they are pointing in roughly opposite directions, they are negatively correlated. In other words, influence that a vector has on a principal component is large when it is further away the PC’s origin.
  
@@ -118,13 +125,14 @@ Inference from scree plot can be made by looking at the "elbow" point in the plo
 
 Inference from the scree plot with the number of components vs. the cumulative proportion of variance explained can be made by looking at the steepness of the curve. The steeper the curve, the more the variance is explained by each additional component. When the curve starts to flatten, it indicates that additional components will not explain much more of the variance. Therefore, the point at which the curve flattens is a good indication of the number of components to retain.
 
- 
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611292-acb0c625-450e-4643-9c64-36808d42f76b.png">
+
 From all the scree plots, we can infer that adding any more than 7 components does not add much. Value to the analysis.
 
 Cluster Analysis:
 
 Clustering can be performed on the WBCD dataset from UCI to identify different groups or clusters of similar cases based on their characteristics or features. The dataset contains measurements of various features of breast cancer cells, such as their size, shape, and texture. Clustering analysis can be used to identify groups of cells that have similar features and could potentially be used to diagnose and treat different types of breast cancer. Clustering can also be used for exploratory data analysis to gain insights into the data and identify any patterns or anomalies. In addition, clustering can be used as a preprocessing step for other analyses such as classification or regression. Overall, clustering can be a useful tool for analyzing and understanding the WBCD dataset.
+
 K-Means Clustering :
 It has been already confirmed by PCA algorithm that the data is separable. Therefore, in order to further exploit this discovery K-means clustering was performed. K-means is a simple and effective clustering algorithm with one drawback which is the necessity to specify the number of clusters beforehand. Once the number of clusters k has been decided, algorithm assigns each data points to one of those clusters using Euclidean distance. There are several techniques which give idea about the optimal number of clusters for data at hand. Of those techniques Elbow method has been employed in order to decide the number of clusters.
 
@@ -132,7 +140,7 @@ Elbow Method:
 
  <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611187-711a0c02-de5d-48f6-86b3-eb80ce6f47db.png">
 
- Elbow method looks at total within-cluster sum of squares for different numbers of clusters and chooses the number after which adding another cluster does not improve the total within-cluster sum of squares. In other words, withincluster variation is minimized. In this analysis, total wss was compared for varying numbers of clusters within the range (0,10). The number of clusters chosen by Elbow method for this data is 2.
+Elbow method looks at total within-cluster sum of squares for different numbers of clusters and chooses the number after which adding another cluster does not improve the total within-cluster sum of squares. In other words, withincluster variation is minimized. In this analysis, total wss was compared for varying numbers of clusters within the range (0,10). The number of clusters chosen by Elbow method for this data is 2.
 
 K-Means Algorithm 
 K-means clustering algorithm works as follows: 
@@ -143,16 +151,23 @@ Step 4: Step 2 and 3 are repeated until cluster assignments stop changing. 9
 
 Elbow method pointed out that 2 is the optimal number of clusters for this data and should be selected as k for k means algorithm. Hence, k –means algorithm was performed with k=2 
 According to the results of the the elbow method described above, 2 clusters should be selected for k means algorithm. We can see the visualizations of the k-means algorithm run with k=2 and nstart=100 below. With nstart=100, the algorithm goes over the steps described above for 100 times. This is to make the results of the algorithm more stable    .
+
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611089-6ad98100-f7aa-4383-b5da-dd47ce047c2b.png">
+
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611132-5233cc5e-f37d-4845-ba04-0d87dd7a8539.png">
+
 From both the plots we see that the data was clustered into 2 different groups with a very little overlap.
 
 Hierarchical Clustering There are two types of hierarchical clustering: agglomerative (bottom-up) and divisive (topdown). In this analysis, agglomerative approach was performed. Hierarchical clustering is another method for clustering data. Main advantage of this method is that the number of clusters do not have to be given the algorithm apriori. Outcome of this algorithm is a tree , called dendrogram, consisting of leaves and branches. Leaves correspond to every single data points. Similar data points , leaves, fuse into branches and similar branches fuse until there no leaves or branches left to fuse. Height of the tree represents how similar/dissimilar the data points are to each other. Therefore, data points that fuse at the lower part of the tree are very similar to each other. 
+
 Hierarchical Clustering Algorithm
- Step 1: Treat each data point as if they are themselves clusters, and then compute pairwise dissimilarities. Step 2: Fuse the pairs(clusters) that are most similar
-Step 3: Compute the new pairwise dissimilarities between clusters and fuse the most similar ones until the algorithm reaches the root node.
+ Step 1: Treat each data point as if they are themselves clusters, and then compute pairwise dissimilarities. 
+ Step 2: Fuse the pairs(clusters) that are most similar
+ Step 3: Compute the new pairwise dissimilarities between clusters and fuse the most similar ones until the algorithm reaches the root node.
  Hierarchical clustering was applied to reduced data which PCA produced. Distances between data points were calculated using Euclidean distance. Several types of linkage determine which clusters should be fused. In this analysis, complete, average, and ward linkage were employed. Cutting the dendrogram into different groups Dendrogram produce by hierarchical clustering with ward linkage was cut into first 2 and then, 4 groups. Numbers of observations in each cluster were examined and it is clear that clusters represent the different groups of patients. Cutting the tree into 2 groups reveals that patients who have been diagnosed with M belong to 1st cluster and patients who have been diagnosed as B belong to 2nd cluster. The tree was also cut into 4 groups, however, 2 clusters represent the data in a much better and useful way, than 4 clusters. When compared to the clusters produced by 2-means clustering algorithm , it can be seen that the clusters obtained by cutting the tree into 2 are consistent with 2-means results.  
+ 
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611053-872810ea-0e61-4f93-88e5-d426ba393853.png">
+
 
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232611020-05a14d60-8d46-4139-86b0-417d93634e75.png">
 
@@ -161,7 +176,6 @@ To understand how well these clustering methods partitioned the data, cluster nu
 Exploratory Factor Analysis
 The aim of performing factor analysis on the WBCD dataset from UCI is to identify underlying factors that explain the correlations among the variables in the dataset. The WBCD dataset contains information about the characteristics of different cell nuclei from fine needle aspirates of breast mass. The dataset includes a large number of variables, such as radius, texture, perimeter, area, smoothness, compactness, concavity, symmetry, fractal dimension, and diagnosis.
 Factor analysis can help identify the underlying factors driving the relationships among these variables. This can provide insights into the factors that contribute to breast cancer diagnosis and help develop more accurate diagnostic models. Additionally, factor analysis can help simplify the dataset by identifying the variables most strongly associated with the underlying factors, making it easier to analyze the data. Finally, factor analysis can help identify outliers or unusual patterns in the data that may indicate errors or other issues with the dataset. Overall, factor analysis aims to better understand the complex relationships among the variables in the WBCD dataset.
-
 
 Steps taken : 
 1. Perform data cleaning and pre-processing by converting the diagnosis column of the wdbc data frame into a factor variable, with levels "B" (for benign) and "M" (for malignant )
@@ -181,6 +195,7 @@ For example, the communalities for "radius_mean" is 0.954, which means that 95.4
  <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232610833-8f36b5c1-aa25-4719-8b28-0d7032528ab4.png">
 
 Parallel analysis is a method used to determine the optimal number of factors or components in a factor analysis. It compares the eigenvalues of the actual data to the eigenvalues of randomly generated data with the same sample size and number of variables. Based on the output you provided, it seems that the parallel analysis suggests that the number of factors in the data is 6 and the number of components is 5. This means that the data is likely best represented by 6 underlying factors or dimensions, and that a factor analysis with 5 components is appropriate for summarizing the data.
+
  <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232610807-8400dbc3-003c-40bc-a833-62a129b602d8.png">
 
 Based on the loadings output, the variables that contribute the most to each of the 6 components (RC1, RC2, RC3, RC4, RC5, and RC6) are as follows:
@@ -194,7 +209,6 @@ Based on the loadings output, the variables that contribute the most to each of 
 - Therefore, the variables contributing the most to the first five components are quite varied, while symmetry-related variables and measures of irregularity in cell shape mostly characterize the sixth component.
 
 <img width="540" alt="image" src="https://user-images.githubusercontent.com/123758881/232610773-1c6e54ca-e0fc-4169-8457-ca4af7ee2ccc.png">
-
 
   In this case, where the line is almost horizontal for 4 factors, a 4-factor model is likely to be a good fit for the data, and further increasing the number of factors may not be meaningful or valuable.
 
@@ -265,7 +279,3 @@ Yes, we could find two naturally occurring cluster by applying cluster analysis
 Yes, we could apply LDA concept on the data
 ❖	How accurate is the classification based on this linear combination of variables?
 The area under the curve (AUC) measures the classifier's performance, with a higher AUC indicating better performance. In this case, the plot shows that the LDA classifier has a very high performance, with an AUC of 0.999, close to the maximum possible value of 1
-
-
-
-![image](https://user-images.githubusercontent.com/123758881/232609946-402fac22-2da6-4322-a9df-4e7dcc2a964b.png)
