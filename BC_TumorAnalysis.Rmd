@@ -1,0 +1,215 @@
+---
+title: "Tumor Analysis"
+description: "Develop accurate models for tumor diagnosis prediction using comprehensive analysis of Wisconsin Breast Cancer Diagnostic (WBCD) dataset including feature selection, classification models, visualization, outlier identification, imbalanced data management, performance evaluation, and generalization approaches. Increased model accuracy and precision with PCA for dimensionality reduction and K-means clustering for feature extraction"
+author: "pk673@rutgets.edu"
+date: "2023-04-07"
+output: html_document
+---
+
+```{r}
+library(readr)
+library(MVA)
+library(HSAUR2)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(Hotelling)
+library(stats)
+library(biotools)
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(MASS)
+library(ggplot2)
+library(memisc)
+library(ROCR)
+library(dplyr)
+library(klaR)
+library(reshape2)
+library(corrplot)
+library(MASS)
+library(ggplot2)
+library(memisc)
+library(ROCR)
+library(dplyr)
+library(klaR)
+
+# Load the WBCD dataset from the UCI repository
+data <- read.csv(url(
+  "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data"),
+                     header = FALSE,
+                     col.names = c("ID", "diagnosis", "radius_mean", 
+                                   "texture_mean", "perimeter_mean", 
+                                   "area_mean", "smoothness_mean", 
+                                   "compactness_mean", "concavity_mean", 
+                                   "concave_pts_mean", "symmetry_mean", 
+                                   "fractal_dim_mean", "radius_se", 
+                                   "texture_se", "perimeter_se", "area_se", 
+                                   "smoothness_se", "compactness_se", 
+                                   "concavity_se", "concave_pts_se", 
+                                   "symmetry_se", "fractal_dim_se", 
+                                   "radius_worst", "texture_worst", 
+                                   "perimeter_worst", "area_worst", 
+                                   "smoothness_worst", "compactness_worst", 
+                                   "concavity_worst", "concave_pts_worst", 
+                                   "symmetry_worst", "fractal_dim_worst"))
+dim(data)
+str(data)
+rownames(data)=data$id
+data=data[,-1] # removes the first column of the data, which corresponds to the unique ID number of each patient. This is done as the ID number is not relevant for analysis and it protects the privacy of the individuals in the dataset
+
+##descriptives:
+means=apply(data[,-1],2,mean)
+stand.dev=apply(data[,-1],2,sd)
+descriptives=round(cbind(means,stand.dev),2)
+
+##identify any outliers or missing values in the dataset
+sum(is.na(data)) # number of records with N/A values
+summary(data)
+
+## Inferences from the summary :
+#The given data set contains 30 features, out of which 10 features represent the mean values, 10 features represent the standard errors, and 10 features represent the "worst" or largest (mean of the three largest values) of the corresponding mean features. 
+# 
+# The features have a wide range of values. For example, the radius_mean ranges from 6.98 to 28.11, while the area_worst ranges from 185.2 to 4254.
+
+# Some features have a higher variability than others. For example, the standard deviation of area_mean is 351.91, which is much higher than the standard deviation of fractal_dim_se, which is 0.00.
+
+#Variables that have potential outliers based on the mean and standard deviation are:
+# perimeter_mean (max value is more than 3 standard deviations from the mean)
+# area_mean (max value is more than 3 standard deviations from the mean)
+# perimeter_se (max value is more than 3 standard deviations from the mean)
+# area_se (max value is more than 3 standard deviations from the mean)
+# perimeter_worst (max value is more than 3 standard deviations from the mean)
+# area_worst (max value is more than 3 standard deviations from the mean)
+# It is important to note that these observations are only potential outliers
+
+mean_features <- data[, grep("_mean", colnames(data))]
+se_features <- data[, grep("_se", colnames(data))]
+worst_features <- data[, grep("_worst", colnames(data))]
+
+# Plot histograms of all the predictor variables as per the category (mean, se and worst)
+par(mar=c(5, 5, 5, 5))
+
+par(mfrow=c(6,5), mar=c(3,3,2,1))  # Set up the plot window
+for(i in 1:ncol(worst_features)) { # Loop over all the predictor variables
+  hist(worst_features[[i]], main=names(worst_features)[i], col="blue", xlab="") 
+}
+par(mfrow=c(6,5), mar=c(3,3,2,1))  # Set up the plot window
+for(i in 1:ncol(mean_features)) { # Loop over all the predictor variables
+  hist(mean_features[[i]], main=names(mean_features)[i], col="blue", xlab="") 
+}
+par(mfrow=c(6,5), mar=c(3,3,2,1))  # Set up the plot window
+for(i in 1:ncol(se_features)) { # Loop over all the predictor variables
+  hist(se_features[[i]], main=names(se_features)[i], col="blue", xlab="") 
+}
+
+# # Some features appear to be normally distributed, such as radius_mean, texture_mean, smoothness_mean, and symmetry_mean. These features have approximately symmetric bell-shaped histograms.
+# # Some features are skewed, such as concavity_mean, concave_pts_mean, concavity_worst, and concave_pts_worst. These features have histograms that are not bell-shaped and have a longer tail on one side.
+
+# Create a box plot for each category
+par(mfrow=c(3,1), mar=c(3,3,2,1)) # Create a 1x3 grid of plots
+boxplot(mean_features, main="Mean Features", ylab="Value", las=2)
+boxplot(se_features, main="SE Features", ylab="Value", las=2)
+boxplot(worst_features, main="Worst Features", ylab="Value", las=2)
+
+#Observations from the boxplots: 
+#Nuclei mean of the perimeter and area is higher.
+#Standard Error of the Area is higher.
+#In worst nuclei scenario, area has extremly high values.
+
+#Plot a Diagnosis Plot for Response Variable
+# Add a geom_bar layer to create a bar plot,Customize the plot with labels and title,Change the fill colors for the bar as per the diagnosis
+ggplot(data, aes(x = diagnosis, fill = diagnosis)) + 
+  geom_bar() + 
+  labs(title = "Diagnosis Plot for Response Variable", x = "diagnosis", y = "Count") + 
+  scale_fill_manual(values = c("#FF69B4", "#4169E1")) + 
+  theme_classic()
+
+#The response variable looks slightly unbalanced.It may indicate that there is some bias in the data or that the study was not designed to produce a balanced sample. This could potentially affect the results of any statistical analyses performed on the data, as the sample may not be representative of the population of interest. 
+
+#Correlation amongst the features
+cor_mat <- cor(data[,-1])
+
+# extract correlation values for target variable (diagnosis)
+corr_values <- sort(cor_mat[1,], decreasing = TRUE)
+
+# create a data frame with target, predictor, and correlation values
+results <- data.frame(Target = "diagnosis",
+                      Predictor = names(corr_values),
+                      Correlation = corr_values)
+results <- arrange(results, desc(Correlation))
+# print the results
+print(results)
+#The output shows the correlation values between the target variable, which is the diagnosis of the tumor (M=malignant or B=benign), and each of the predictor variables in the dataset.
+
+#Based on the output, we can infer that the size-related variables such as radius, perimeter, and area, are strongly positively correlated with the tumor being malignant. This suggests that larger tumor sizes are more likely to be malignant.
+
+#Additionally, other variables such as concave points mean and worst, concavity mean and worst, and compactness mean and worst also have a positive correlation with malignancy.
+
+#On the other hand, variables such as fractal dimension mean and worst, smoothness mean, worst, and se, symmetry mean, worst, and se, and texture mean, worst, and se have a negative correlation with malignancy. This suggests that tumors with lower values for these variables are more likely to be malignant.
+
+#It is important to note that correlation does not imply causation, and other factors not included in the dataset may also play a role in determining the malignancy of a tumor.
+
+
+
+
+
+
+
+# Find highly correlated pairs (r > 0.9)
+high_cor_pairs <- which(cor_mat > 0.9 & cor_mat < 1, arr.ind = TRUE)
+high_cor_pairs_df <- data.frame(row = rownames(cor_mat)[high_cor_pairs[,1]],
+                                col = colnames(cor_mat)[high_cor_pairs[,2]],
+                                cor = cor_mat[high_cor_pairs])
+high_cor_pairs_df # Print the highly correlated pairs
+ggcorr(data, method = c("everything", "pearson"),
+       label_alpha= TRUE,
+       label = TRUE, label_size = 1, layout.exp= 0)
+
+data %>%
+  group_by(diagnosis) %>%
+  ggplot(aes(radius_mean, radius_worst, color = diagnosis)) +
+  geom_point(alpha = .5)
+
+# This gives us some helpful information. First, it tells us that the average
+# radius for benign tumors is lower than the average radius for malignant tumors.
+# Secondly, it shows us that there is some overlap where we could potentially
+# misdiagnose the tumors if these were the only features measured.
+
+data %>% group_by(diagnosis) %>%
+  ggplot(aes(texture_mean, texture_worst, fill = diagnosis)) +
+  geom_boxplot()
+# This shows us that, on average, benign tumors have lower values of both texture
+# mean and texture worst measurements. It also shows us that some samples would
+# cause an error in classification if we did not know their diagnosis in advance.
+# So, we need to dig a little deeper and see if we can get a better delineation of
+# classes (benign or malignant) through principal component analysis.
+
+# Summary of data explorations findings:
+# 
+# Most histograms present very asymmetric behavior with similar to exponential distribution.
+# Some predictor look like exponential distribuition as radius_se, perimeter_se, area_se, concavity_se and fractal_dimension_se.
+# There is no true outliers, the outliers at box-plot is due the kind of distribution.
+# There is no missing.
+# we identified 21 pairs of highly correlated predictors, r> 0.9, this was due to the choice of predictors that are associated, measures things related: radius, perimeter and area.
+# There are 14 predictors related with the response, Diagnosis, with r>=0.6, this is a good news.
+
+
+```
+

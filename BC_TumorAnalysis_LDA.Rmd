@@ -1,0 +1,154 @@
+---
+title: "Tumor Analysis - Linear Discriminant Analysis"
+description: "Develop accurate models for tumor diagnosis prediction using comprehensive analysis of Wisconsin Breast Cancer Diagnostic (WBCD) dataset including feature selection, classification models, visualization, outlier identification, imbalanced data management, performance evaluation, and generalization approaches. Increased model accuracy and precision with PCA for dimensionality reduction and K-means clustering for feature extraction"
+author: "pk673@rutgets.edu"
+date: "2023-04-07"
+output: html_document
+---
+
+```{r}
+library(MASS)
+library(ggplot2)
+library(memisc)
+library(ROCR)
+library(dplyr)
+library(klaR)
+
+## #Goal of LDA is to find a linear combination of the measurements that maximally separates the malignant from the benign tumors. In LDA, the number of LDs is at most one less than the number of classes, so in this case, there are two LDs. The proportion of variance explained by each LD tells us how much of the total variability in the data is accounted for by that LD. 
+wdbc <- read.csv(url(
+  "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data"),
+                     header = FALSE,
+                     col.names = c("ID", "diagnosis", "radius_mean", 
+                                   "texture_mean", "perimeter_mean", 
+                                   "area_mean", "smoothness_mean", 
+                                   "compactness_mean", "concavity_mean", 
+                                   "concave_pts_mean", "symmetry_mean", 
+                                   "fractal_dim_mean", "radius_se", 
+                                   "texture_se", "perimeter_se", "area_se", 
+                                   "smoothness_se", "compactness_se", 
+                                   "concavity_se", "concave_pts_se", 
+                                   "symmetry_se", "fractal_dim_se", 
+                                   "radius_worst", "texture_worst", 
+                                   "perimeter_worst", "area_worst", 
+                                   "smoothness_worst", "compactness_worst", 
+                                   "concavity_worst", "concave_pts_worst", 
+                                   "symmetry_worst", "fractal_dim_worst"))
+
+## Data Cleansing and Prep
+head(wdbc)
+dim(wdbc)
+str(wdbc)
+wdbc.data <- as.matrix(wdbc[,c(3:32)])
+#By converting the selected columns to a matrix using as.matrix(), we are ensuring that the data is in a suitable format for many machine learning algorithms and statistical analyses.
+row.names(wdbc.data) <- wdbc$id
+#By setting the row names to the id column values, we can easily identify the observations in the matrix based on their unique identifiers.
+wdbc_raw <- cbind(wdbc.data, as.numeric(as.factor(wdbc$diagnosis))-1)
+#The as.factor(wdbc$diagnosis) part of the code converts the diagnosis column of the wdbc data frame into a factor variable, with levels "B" (for benign) and "M" (for malignant). The as.numeric() function then converts the factor variable into a numeric vector, where "B" is represented by 1 and "M" is represented by 2.
+#The -1 part of the code subtracts 1 from the numeric vector, so that "B" is represented by 0 and "M" is represented by 1. This is necessary because many machine learning algorithms require the response variable to be a binary variable that is coded as 0 and 1.
+colnames(wdbc_raw)[31] <- "diagnosis"
+smp_size_raw <- floor(0.75 * nrow(wdbc_raw))
+#calculating the sample size for the training set in a machine learning model.
+#0.75 value in the code represents the proportion of the data that we want to use for training the model. In this case, we are using 75% of the data for training and 25% of the data for testing.
+
+#By calculating the sample size for the training set, we can randomly select observations from the wdbc_raw matrix to create a training set that can be used to train a machine learning model. The remaining observations will be used to test the model's performance.
+
+train_ind_raw <- sample(nrow(wdbc_raw), size = smp_size_raw)
+#randomly selecting a set of indices from the wdbc_raw matrix to be used as the training set in a machine learning model.
+# why choose random samples?
+#By randomly selecting a subset of observations to be used for training, we can reduce the risk of overfitting, where a model learns to fit the noise in the training data rather than the underlying patterns. Additionally, using a separate testing set allows us to evaluate the performance of the model on unseen data, which is a better measure of how well the model will generalize to new data in the future.
+train_raw.df <- as.data.frame(wdbc_raw[train_ind_raw, ])
+#creating a data frame containing the training set for a machine learning model so that we can easily manipulate and analyze the data in R
+test_raw.df <- as.data.frame(wdbc_raw[-train_ind_raw, ]) 
+
+wdbc_raw.lda <- lda(formula = train_raw.df$diagnosis ~ ., data = train_raw.df)
+wdbc_raw.lda
+#training a Linear Discriminant Analysis (LDA) model on the training set of the WBCD
+#train_raw.df$diagnosis ~ . to indicate that we want to model the diagnosis based on all other variables in the data frame.
+#wdbc_raw.lda object contains the trained LDA model, which can be used to make predictions on new data. The model will have learned a linear decision boundary that separates the two classes of diagnosis based on the values of the predictor variables. By using LDA, we aim to find a lower-dimensional representation of the data that maximizes the separation between the two classes, which can help us better classify new observations in the future.
+
+summary(wdbc_raw.lda)
+print(wdbc_raw.lda)
+
+wdbc_raw.lda$counts #The number of observations in each class in the training data.
+wdbc_raw.lda$means #The mean values of the predictor variables for each class in the dataset. This is a matrix with 60 rows (one for each predictor variable) and 2 columns (one for each class).
+wdbc_raw.lda$scaling
+#These coefficients determine the direction of the linear combination of the input variables (predictors) that best separates the two groups (benign and malignant) in the training data
+
+#The LD1 column represents the coefficients for the first linear discriminant. Positive coefficients suggest that higher values of that variable are associated with the malignant group, while negative coefficients suggest the opposite. The magnitude of the coefficient indicates the strength of the association.  The output shows the coefficients of the predictors for LD1, which is the first linear discriminant. The higher the absolute value of the coefficient, the more important the predictor is for discriminating between the two categories.
+
+#Therefore, based on the output, it can be inferred that the predictors with the highest absolute values of coefficients (i.e., smoothness_mean, compactness_mean, concavity_mean, concave_pts_mean, fractal_dim_mean, smoothness_se, compactness_se, concavity_se, concave_pts_se, fractal_dim_se, smoothness_worst, concavity_worst, concave_pts_worst, and fractal_dim_worst) are the most important for discriminating between malignant and benign breast tumors. These predictors are expected to have a strong influence on the classification of the two categories because they have the highest discriminatory power in the first linear discriminant.
+
+
+
+
+
+
+
+wdbc_raw.lda$prior
+#provides the estimated prior probabilities of the two classes (malignant and benign). In this case, the estimated prior probability of class 0 (malignant) is 0.6220657, while the estimated prior probability of class 1 (benign) is 0.3779343.
+
+#These estimates are based on the proportion of each class in the training data. The estimated prior probabilities are used in the classification rule to predict the probability of class membership for new observations based on their predictor variable values.
+wdbc_raw.lda$lev
+#These levels correspond to the two classes in the WBCD dataset: 0 represents malignant tumors, while 1 represents benign tumors.
+
+wdbc_raw.lda$svd
+#decomposes a matrix into three components: a left singular matrix, a diagonal singular value matrix, and a right singular matrix.
+##In this case, the svd output has only one value, which represents the largest singular value of the predictor variables. This value indicates the strength of the linear association between the predictor variables and the response variable.
+
+#singular values (svd) that gives the ratio of the between- and within-group standard deviations on the linear discriminant variables.
+wdbc_raw.lda$N
+#LDA model was trained on a dataset of 426 observations.
+wdbc_raw.lda$call #the exact R code that was used to fit the LDA model
+(prop = wdbc_raw.lda$svd^2/sum(wdbc_raw.lda$svd^2))
+#A proportion of 1 indicates that the LD explains all of the variability in the data, which is not typical in practice. In general, each LD explains some proportion of the total variability, and the proportions should add up to 1.
+
+#we can use the singular values to compute the amount of the between-group variance that is explained by each linear discriminant. In our example we see that the first linear discriminant explains more than 99% of the between-group variance in the iris dataset.
+r2 <- lda(formula = diagnosis ~ ., data = wdbc, CV = TRUE)
+r2
+head(r2$class)
+#the Maximum a Posteriori Probability (MAP) classification (a factor)
+#posterior: posterior probabilities for the classes.
+head(r2$posterior, 3)
+#The output of head(r2$posterior, 3) shows the posterior probabilities of each observation in the dataset belonging to each of the two classes - B (benign) and M (malignant).
+
+#For example, the first row shows that the probability of the first observation being classified as B is 2.763446e-05 (which is a very small value close to 0), and the probability of it being classified as M is 0.9999724 (which is a high value close to 1). Similarly, the second row shows that the probability of the second observation being classified as B is 0.001797571 and the probability of it being classified as M is 0.9982024. The third row shows the same probabilities for the third observation.
+
+#These probabilities are used to make the final classification decision by selecting the class with the highest probability. For example, in the first row, since the probability of the observation being classified as M is much higher than the probability of it being classified as B, it will be classified as M.
+
+
+plot(wdbc_raw.lda)
+#These plots show the distribution of the linear discriminant scores for each group. The linear discriminant score is a measure of the distance between an observation and the group centroids in the transformed space. they show the distribution of the linear discriminant scores for the group, with the x-axis representing the linear discriminant score and the y-axis representing the densit
+
+#Inference from these plots can be used to understand the separation between the two groups in the transformed space. If the distributions of the linear discriminant scores for the two groups overlap substantially, this indicates that the LDA model is not able to fully separate the groups based on the predictors, and may not be very effective at discriminating between the two groups. On the other hand, if the distributions are well separated, this suggests that the LDA model is able to effectively differentiate between the two groups based on the predictors.
+wdbc_raw.lda.predict <- predict(wdbc_raw.lda, newdata = test_raw.df)
+wdbc_raw.lda.predict$class
+wdbc_raw.lda.predict$x
+# Get the posteriors as a dataframe.
+wdbc_raw.lda.predict.posteriors <- as.data.frame(wdbc_raw.lda.predict$posterior)
+#predict() function is used to make predictions on new data using the trained LDA model (wdbc_raw.lda) and store the predicted class and LDA scores in wdbc_raw.lda.predict$class and wdbc_raw.lda.predict$x respectively.
+
+#wdbc_raw.lda.predict$class contains the predicted class labels for the test data and wdbc_raw.lda.predict$x contains the LDA scores for the test data.
+
+#wdbc_raw.lda.predict$posterior contains the posterior probabilities of each class for each observation in the test data. By converting it to a data frame using as.data.frame(), we can see the posterior probabilities of the test data being in each class.
+pred <- prediction(wdbc_raw.lda.predict.posteriors[,2], test_raw.df$diagnosis)
+#prediction object which will be used to calculate various performance metrics for the classification model.
+
+#The prediction function takes two arguments:
+#wdbc_raw.lda.predict.posteriors[,2]: the predicted probabilities for class 1 (malignant) from the LDA model, extracted from the wdbc_raw.lda.predict$posterior output.
+#test_raw.df$diagnosis: the true class labels for the test set.
+#The output of the prediction function is an object of class prediction, which contains the predicted probabilities and true class labels.
+
+roc.perf = performance(pred, measure = "tpr", x.measure = "fpr")
+#roc.perf object contains information about the ROC curve, such as the true positive rates and false positive rates at different cutoff values, which can be used to evaluate the performance of the model.
+
+auc.train <- performance(pred, measure = "auc")
+auc.train <- auc.train@y.values
+plot(roc.perf)
+abline(a=0, b= 1)
+text(x = .25, y = .65 ,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
+#The area under the curve (AUC) is a measure of the classifier's performance, with a higher AUC indicating better performance.
+
+#In this case, the plot shows that the LDA classifier has very high performance, with an AUC of 0.999, which is very close to the maximum possible value of 1. The fact that the ROC curve is very close to the top-left corner of the plot indicates that the classifier is able to achieve high TPRs with low FPRs, which is a desirable property for a binary classifier. Overall, the plot indicates that the LDA classifier is very effective at distinguishing between malignant and benign tumors in the test dataset
+
+```
+

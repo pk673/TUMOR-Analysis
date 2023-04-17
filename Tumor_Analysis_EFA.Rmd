@@ -1,0 +1,105 @@
+---
+title: "Tumor Analysis - Exploratory Factor Analysis"
+description: "Develop accurate models for tumor diagnosis prediction using comprehensive analysis of Wisconsin Breast Cancer Diagnostic (WBCD) dataset including feature selection, classification models, visualization, outlier identification, imbalanced data management, performance evaluation, and generalization approaches. Increased model accuracy and precision with PCA for dimensionality reduction and K-means clustering for feature extraction"
+author: "pk673@rutgets.edu"
+date: "2023-04-07"
+output: html_document
+---
+```{r}
+# Factor Analysis
+#The aim of performing factor analysis on the WBCD dataset from UCI is to identify underlying factors that explain the correlations among the variables in the dataset. The WBCD dataset contains information about the characteristics of different cell nuclei from fine needle aspirates of breast mass. The dataset includes a large number of variables, such as radius, texture, perimeter, area, smoothness, compactness, concavity, symmetry, fractal dimension, and diagnosis. Factor analysis can help identify the underlying factors driving the relationships among these variables. This can provide insights into the factors that contribute to breast cancer diagnosis and help develop more accurate diagnostic models. Additionally, factor analysis can help simplify the dataset by identifying the variables most strongly associated with the underlying factors, making it easier to analyze the data. Finally, factor analysis can help identify outliers or unusual patterns in the data that may indicate errors or other issues with the dataset. Overall, factor analysis aims to better understand the complex relationships among the variables in the WBCD dataset.
+
+library(psych)
+wdbc <- read.csv(url(
+  "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data"),
+                     header = FALSE,
+                     col.names = c("ID", "diagnosis", "radius_mean", 
+                                   "texture_mean", "perimeter_mean", 
+                                   "area_mean", "smoothness_mean", 
+                                   "compactness_mean", "concavity_mean", 
+                                   "concave_pts_mean", "symmetry_mean", 
+                                   "fractal_dim_mean", "radius_se", 
+                                   "texture_se", "perimeter_se", "area_se", 
+                                   "smoothness_se", "compactness_se", 
+                                   "concavity_se", "concave_pts_se", 
+                                   "symmetry_se", "fractal_dim_se", 
+                                   "radius_worst", "texture_worst", 
+                                   "perimeter_worst", "area_worst", 
+                                   "smoothness_worst", "compactness_worst", 
+                                   "concavity_worst", "concave_pts_worst", 
+                                   "symmetry_worst", "fractal_dim_worst"))
+
+## Data Cleansing and Prep
+head(wdbc)
+dim(wdbc)
+str(wdbc)
+
+attach(wdbc)
+fit.pc <- principal(wdbc[, -c(1,2)], nfactors = 6, rotate = "varimax")
+fit.pc #h2-explained variance u2-unexplained variance
+#performing principal component analysis (PCA) on the WBCD dataset, excluding the second column which contains the diagnosis of each sample.
+## RC1, RC2, RC3, and RC4 are the factor loadings for each of the thirteen variables (columns) in the dataset.
+# 
+# h2 refers to the communality of each variable, which is the proportion of its variance explained by the extracted factors.
+# 
+# u2 refers to the uniqueness of each variable, which is the proportion of its variance not explained by the extracted factors.
+# 
+# communalities are the sum of the squared factor loadings for each variable plus the uniqueness. In other words, com represents the entire proportion of variance in each variable that can be explained by the extracted components and uniqueness.
+# 
+# In factor analysis, the values of h2, u2, and com are crucial diagnostic metrics since they provide information regarding the goodness-of-fit of the extracted factors. A greater value of h2 suggests that the factor analysis can explain a greater proportion of the variance in the variable, whereas a smaller value of u2 shows that there is less unexplained variance in the variable. A high value of com suggests that the factor analysis fits the data better overall.
+
+round(fit.pc$values, 3)
+#shows the eigenvalues associated with each factor extracted from the principal component analysis. Eigenvalues represent the amount of variance in the original data that is explained by each factor.
+
+#This output shows the eigenvalues of the principal components, which represent the amount of variance in the data explained by each principal component. The first principal component explains the most variance in the data, followed by the second, third, and so on. The eigenvalues can be used to determine how many principal components should be retained in the analysis, with a commonly used criterion being to retain principal components with eigenvalues greater than 1. In this case, we can see that the first 10 principal components have eigenvalues greater than 1, suggesting that they are all potentially useful for summarizing the variation in the data.
+
+fit.pc$loadings #look fir any value greater than 0.5 
+
+# Based on the loadings output, the variables that contribute the most to each of the 6 components (RC1, RC2, RC3, RC4, RC5, and RC6) are as follows:
+# 
+# RC1: radius_mean, perimeter_mean, area_mean, radius_worst, perimeter_worst, area_worst
+# RC2: texture_mean, compactness_mean, concavity_mean, concave_pts_mean, fractal_dim_mean, texture_se, compactness_se, concavity_se, concave_pts_se, fractal_dim_se, compactness_worst, concavity_worst, concave_pts_worst, fractal_dim_worst
+# RC3: smoothness_mean, symmetry_mean, texture_se, smoothness_se, fractal_dim_se, symmetry_worst
+# RC4: smoothness_mean, compactness_mean, concavity_mean, concave_pts_mean, smoothness_se
+# RC5: smoothness_mean, compactness_mean, concavity_mean, concave_pts_mean, symmetry_mean
+# RC6: smoothness_mean, compactness_mean, concavity_mean, concave_pts_mean, texture_worst, compactness_worst, concavity_worst, concave_pts_worst, fractal_dim_worst
+# Therefore, the variables contributing the most to the first five components are quite varied, while the sixth component is mostly characterized by texture-related variables and measures of irregularity in cell shape.
+# In general, the variables with loadings greater than 0.5 in each component are considered to be the most significant contributors to that component.
+
+
+# Loadings with more digits
+for (i in c(1,3,2,4,5,6)) { print(fit.pc$loadings[[1,i]])}
+# The output shows the loadings of the first principal component for each of the 11 variables, with more digits than the previous output. Loadings represent the correlation between each variable and the principal component, with higher absolute values indicating a stronger relationship. Here are some observations based on the updated loadings:
+# 
+# From this output, we can see that the first principal component is strongly positively correlated with the first variable (radius_mean) and moderately positively correlated with the fifth variable (area_mean). The first principal component is negatively correlated with variables 8 and 9 (fractal_dimension_mean and texture_se) to a moderate extent, and weakly negatively correlated with variables 3, 6, 10, and 11.
+# 
+# Overall, the first principal component captures the variation in the dataset related to the size and shape of the cell nuclei (as measured by variables 1 and 5) and inversely related to the texture and fractal dimension of the cell (as measured by variables 8 and 9).
+
+# Communalities
+fit.pc$communality
+##Higher communalities mean the factor solution represents the variable well. 
+#From the output, we can see that most of the original variables have high communality values (close to 1), indicating that they are well-represented by the principal components. This suggests that the principal components capture the majority of the variation in the original data.
+#Communalities represent the proportion of variance in each variable that can be explained by all the other variables included in the analysis.
+#For example, the communalities for "radius_mean" is 0.954, which means that 95.4% of the variance in "radius_mean" can be explained by all the other variables included in the principal component analysis (PCA).
+
+
+# Rotated factor scores, Notice the columns ordering: RC1, RC3, RC2 and RC4
+fit.pc$scores
+# Play with FA utilities
+
+fa.parallel(wdbc[-2]) # See factor recommendation
+#Parallel analysis is a method used to determine the optimal number of factors or components in a factor analysis. It compares the eigenvalues of the actual data to the eigenvalues of randomly generated data with the same sample size and number of variables. Based on the output you provided, it seems that the parallel analysis suggests that the number of factors in the data is 6 and the number of components is 5. This means that the data is likely best represented by 6 underlying factors or dimensions, and that a factor analysis with 5 components is appropriate for summarizing the data.
+fa.plot(fit.pc) # See Correlations within Factors
+
+fa.diagram(fit.pc)
+par(mar=c(1,1,1,1)) # adjust the margins
+par(cex.lab=0.2, cex.axis=0.4) # increase font size for axis labels and tick marks
+par(cex.main=1.5) # increase font size for title
+
+#fa.diagram(fit.pc) # Visualize the relationship
+vss(wdbc[-2]) # See Factor recommendations for a simple structure
+
+#In this case, where the line is almost horizontal for 4 factors, a 4-factor model is likely to be a good fit for the data, and further increasing the number of factors may not be meaningful or valuable.
+
+
+```

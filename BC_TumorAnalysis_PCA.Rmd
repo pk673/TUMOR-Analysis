@@ -1,0 +1,204 @@
+---
+title: "Tumor Analysis - PCA"
+description: "Develop accurate models for tumor diagnosis prediction using comprehensive analysis of Wisconsin Breast Cancer Diagnostic (WBCD) dataset including feature selection, classification models, visualization, outlier identification, imbalanced data management, performance evaluation, and generalization approaches. Increased model accuracy and precision with PCA for dimensionality reduction and K-means clustering for feature extraction"
+author: "pk673@rutgets.edu"
+date: "2023-04-07"
+output: html_document
+---
+
+```{r}
+
+library(readr)
+library(MVA)
+library(HSAUR2)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(Hotelling)
+library(stats)
+library(biotools)
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(MASS)
+library(ggplot2)
+library(memisc)
+library(ROCR)
+library(dplyr)
+library(klaR)
+library(reshape2)
+library(corrplot)
+library(MASS)
+library(ggplot2)
+library(memisc)
+library(ROCR)
+library(dplyr)
+library(klaR)
+
+# Load the WBCD dataset from the UCI repository
+data <- read.csv(url(
+  "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data"),
+                     header = FALSE,
+                     col.names = c("ID", "diagnosis", "radius_mean", 
+                                   "texture_mean", "perimeter_mean", 
+                                   "area_mean", "smoothness_mean", 
+                                   "compactness_mean", "concavity_mean", 
+                                   "concave_pts_mean", "symmetry_mean", 
+                                   "fractal_dim_mean", "radius_se", 
+                                   "texture_se", "perimeter_se", "area_se", 
+                                   "smoothness_se", "compactness_se", 
+                                   "concavity_se", "concave_pts_se", 
+                                   "symmetry_se", "fractal_dim_se", 
+                                   "radius_worst", "texture_worst", 
+                                   "perimeter_worst", "area_worst", 
+                                   "smoothness_worst", "compactness_worst", 
+                                   "concavity_worst", "concave_pts_worst", 
+                                   "symmetry_worst", "fractal_dim_worst"))
+dim(data)
+str(data)
+rownames(data)=data$id
+data=data[,-1] # removes the first column of the data, which corresponds to the unique ID number of each patient. This is done as the ID number is not relevant for analysis and it protects the privacy of the individuals in the dataset
+
+# PCA transformation
+# In this type, as the variables are highly correlated, we will transform the predictors using principal component analysis(PCA). PCA will provide the transformed variables
+
+wdbc=data[,-c(1)] # dropping the categorical variables
+wdbc= scale(wdbc)  # To standarize the variables
+wdbc_pca=prcomp(wdbc,scale. = TRUE,center=TRUE)
+summary(wdbc_pca)
+
+# The output above shows the importance of each principal component in decreasing order of importance. The standard deviation of each principal component shows how much of the variance in the data is explained by that component. The proportion of variance shows the fraction of the total variance in the data explained by each component. The cumulative proportion shows the total fraction of the variance explained by each component up to that point.
+# 
+# From the output, we can see that the first principal component (PC1) is the most important, with a standard deviation of 3.6444 and explaining 44.27% of the total variance. The second component (PC2) is the second most important, with a standard deviation of 2.3857 and explaining 18.97% of the variance. The cumulative proportion shows that the first two components together explain 63.24% of the total variance.
+# 
+# As we move down the list of components, each subsequent component explains less variance than the previous one. The final components explain very little variance, with the 30th component explaining only 0.00000% of the total variance.
+
+wdbc_pca
+# The standard deviations indicate the amount of variation present in each of the 30 original variables. The first few standard deviations are relatively large, indicating that the first few principal components explain most of the variation in the data. The small standard deviations towards the end of the list indicate that those variables have little influence on the principal components.
+# 
+# The rotation matrix shows the loadings of each of the original variables on the principal components. The loadings indicate how much each variable contributes to each principal component. The larger the absolute value of the loading, the stronger the relationship between the variable and the principal component. By looking at the loadings, it is possible to determine which variables are most strongly associated with each principal component.
+
+#For example, the first principal component is a linear combination of all the original variables, with the largest weights given to "perimeter_mean", "radius_mean", and "area_mean". The second principal component is also a linear combination of all the original variables, but with the largest weights given to "texture_worst", "symmetry_se", and "smoothness_se".
+
+wdbc_pca$center #means
+wdbc_pca$scale #sd
+
+round(wdbc_pca$rotation,2) # loadings
+round(wdbc_pca$x,4) # scores
+
+plot(wdbc_pca)
+#The variance explained by each principal component is obtained by squaring
+#these:
+pr.var=wdbc_pca$sdev^2
+round(pr.var,4)
+#proportion of variance explained by each principal component,
+pve=pr.var/sum(pr.var)
+round(pve,2)
+
+plot(pr.var,main="Scree Diagram",xlab = "Number of Components",
+     ylab="Eigenvalues",
+     type = 'b')
+abline(h=1, lwd=3, col="red")
+#plot the PVE explained by each component
+plot(pve,xlab = "Principal Component",ylab="Proportion of Variance Explained",ylim = c(0,1),
+     type = 'b')
+abline(h=0, lwd=3, col="red")
+#cumulative
+plot(cumsum(pve),xlab = "Principal Component",ylab="Cumulative Proportion of Variance Explained",ylim = c(0,1),
+     type = 'b')
+abline(h=0.95, lwd=3, col="red")
+
+
+
+biplot(wdbc_pca, xlabs = rep("", nrow(wdbc))) # to make it easier to show the vectors
+
+#select how many components
+screeplot(wdbc_pca)
+pca_var <- wdbc_pca$sdev^2
+pca_var_perc <- round(pca_var/sum(pca_var) * 100, 1)
+barplot(pca_var_perc, main = "Variation Plot", xlab = "PCs", 
+        ylab = "Percentage Variance", ylim = c(0, 100))
+
+library("factoextra") 
+fviz_screeplot(wdbc_pca, addlabels = TRUE, ylim = c(0, 50))
+
+#first 7 components explain 95% of the total variance
+#components
+components=round(cbind(wdbc_pca$rotation[,1]*wdbc_pca$sd[1],wdbc_pca$rotation[,2]*wdbc_pca$sd[2],
+                       wdbc_pca$rotation[,3]*wdbc_pca$sd[3],wdbc_pca$rotation[,4]*wdbc_pca$sd[4],
+                       wdbc_pca$rotation[,5]*wdbc_pca$sd[5],wdbc_pca$rotation[,6]*wdbc_pca$sd[6],
+                       wdbc_pca$rotation[,7]*wdbc_pca$sd[7])
+                 ,2)
+colnames(components)=c("PC1","PC2","PC3","PC4","PC5","PC6","PC7")
+
+communality<-components[,1]^2+components[,2]^2+components[,3]^2+
+  components[,4]^2 + components[,5]^2 + components[,6]^2+components[,7]^2
+  
+components<-cbind(components,communality)
+components
+
+# standardized scores
+
+
+sd <- wdbc_pca$sdev
+scores<-round(cbind(wdbc_pca$x[,1]/sd[1],wdbc_pca$x[,2]/sd[2],wdbc_pca$x[,3]/sd[3],
+                    wdbc_pca$x[,4]/sd[4],wdbc_pca$x[,5]/sd[5],wdbc_pca$x[,6]/sd[6],
+                    wdbc_pca$x[,7]/sd[7]),2)
+scores
+plot(scores, main="Score plot",
+     xlab="comp1",ylab="comp2")
+text(scores, rownames(wdbc))
+abline(v=0,h=0,col="red")
+colnames(scores)=c("PC1","PC2","PC3","PC4","PC5","PC6","PC7")
+scores
+
+# loadings
+par(mfrow=c(1,1))
+plot(components[,1:2], main="Loadings plot",
+     xlab="comp1",ylab="comp2", xlim=range(-1,1))
+text(components, rownames(components))
+abline(v=0,h=0,col="red")
+
+plot(components[,2:3], main="Loadings plot",
+     xlab="comp2",ylab="comp3", xlim=range(-1,1))
+text(components, rownames(components))
+abline(v=0,h=0,col="red")
+
+plot(components[,1:3], main="Loadings plot",
+     xlab="comp1",ylab="comp3", xlim=range(-1,1))
+text(components, rownames(components))
+abline(v=0,h=0,col="red")
+
+
+#### different plottings
+diagnosis <- factor(data$diagnosis)
+
+pca_df <- as_tibble(wdbc_pca$x)
+ggplot(pca_df, aes(x = PC1, y = PC2, col = data$diagnosis)) + geom_point()
+
+library(ggfortify)
+wdbc1=as.data.frame(cbind(wdbc,data$diagnosis),)
+colnames(wdbc1['V31'])='diagnosis'
+
+autoplot(wdbc_pca, data = wdbc1, colour ="V31", loadings = FALSE,loadings.label = TRUE,
+         loadings.label.size = 3, loadings.colour="black")
+
+
+```
+
